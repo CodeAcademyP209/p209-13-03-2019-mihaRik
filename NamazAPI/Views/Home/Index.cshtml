@@ -1,0 +1,109 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+
+<select class="custom-select mt-5 mb-3" id="country">
+    <option>Select country</option>
+    <option value="Azerbaijan">Baku</option>
+    <option value="Azerbaijan">Baku</option>
+    <option value="Azerbaijan">Baku</option>
+</select>
+
+<select class="custom-select mt-5 mb-3" id="city">
+    <option>Select city</option>
+</select>
+<img src="https://loading.io/spinners/dual-ring/lg.dual-ring-loader.gif" class="img-fluid" width="40" id="load" />
+<br />
+<span></span>
+
+<table class="table table-bordered table-striped mt-1">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Asr</th>
+            <th>Dhuhr</th>
+            <th>Fajr</th>
+            <th>Imsak</th>
+            <th>Isha</th>
+            <th>Maghrib</th>
+            <th>Midnight</th>
+            <th>Sunrise</th>
+            <th>Sunset</th>
+        </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+</table>
+
+@section scripts{
+    <script>
+        var $load = $("#load").hide();
+        $(function () {
+            //country request api
+            $.ajax({
+                url: "http://api.worldbank.org/v2/country?format=json",
+                success: function (res) {
+                    for (var country of res[1]) {
+                        var option = $("<option>").val(country.name).text(country.name);
+                        $("#country").append(option);
+                    }
+                }
+            })
+
+            //city request api
+            $(document).on("change", "#country", function () {
+                var city = $("#city").html("");
+                $("<option>").text("Select city").appendTo(city);
+                $.ajax({
+                    url: "https://restcountries.eu/rest/v2/name/" + $("#country").val(),
+                    success: function (res) {
+                        var option = $("<option>").val(res[0].capital).text(res[0].capital);
+                        $("#city").append(option);
+                    }
+                })
+
+            })
+
+            //namaz request api
+            $(document).on("change", "#city", function () {
+                var $select = $("#city");
+
+                var info = $select.val();
+
+                $("span").text(info);
+                $("#tbody").html("");
+                $load.show();
+                $.ajax({
+                    url: "http://api.aladhan.com/v1/calendarByCity",
+                    data: { city: $select.val(), country: $("#country").val() },
+                    success: function (res) {
+                        if (res.code == 200) {
+
+                            for (var row of res.data) {
+
+                                var tr = $("<tr>");
+                                $("<td>").html(row.date.readable).appendTo(tr);
+                                $("<td>").html(row.timings.Asr).appendTo(tr);
+                                $("<td>").html(row.timings.Dhuhr).appendTo(tr);
+                                $("<td>").html(row.timings.Fajr).appendTo(tr);
+                                $("<td>").html(row.timings.Imsak).appendTo(tr);
+                                $("<td>").html(row.timings.Isha).appendTo(tr);
+                                $("<td>").html(row.timings.Maghrib).appendTo(tr);
+                                $("<td>").html(row.timings.Midnight).appendTo(tr);
+                                $("<td>").html(row.timings.Sunrise).appendTo(tr);
+                                $("<td>").html(row.timings.Sunset).appendTo(tr);
+
+
+                                $("#tbody").append(tr);
+
+                            }
+
+                            $load.hide();
+
+                        }
+                    }
+                })
+            })
+        })
+    </script>
+}
